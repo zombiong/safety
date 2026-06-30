@@ -7,319 +7,222 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
-    background: #f0f2f5;
-    color: #333;
-    min-height: 100vh;
-  }
+  body { font-family: 'Malgun Gothic','맑은 고딕',sans-serif; background:#f0f2f5; color:#333; min-height:100vh; }
 
   /* 헤더 */
   header {
-    background: linear-gradient(135deg, #1a3c6e 0%, #2563a8 100%);
-    color: white;
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    background: linear-gradient(135deg,#1a3c6e 0%,#2563a8 100%);
+    color: white; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
-  header .icon { font-size: 28px; }
-  header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
-  header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+  .header-left { display:flex; align-items:center; gap:12px; }
+  header .icon { font-size:26px; }
+  header h1 { font-size:18px; font-weight:700; }
+  header p  { font-size:11px; opacity:.8; margin-top:2px; }
+  .header-right { display:flex; align-items:center; gap:10px; }
 
-  .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+  /* 연결 상태 배지 */
+  .conn-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600;
+    cursor:pointer; transition:all 0.2s;
+  }
+  .conn-badge.connected { background:rgba(39,174,96,0.25); border:1px solid rgba(39,174,96,0.5); }
+  .conn-badge.disconnected { background:rgba(231,76,60,0.25); border:1px solid rgba(231,76,60,0.5); }
+  .conn-dot { width:8px; height:8px; border-radius:50%; }
+  .conn-badge.connected .conn-dot { background:#2ecc71; }
+  .conn-badge.disconnected .conn-dot { background:#e74c3c; }
+  .btn-settings { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); color:white; border-radius:8px; padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+  .btn-settings:hover { background:rgba(255,255,255,0.25); }
+
+  .container { max-width:1200px; margin:0 auto; padding:20px 16px; }
+
+  /* 공유 안내 배너 */
+  .banner {
+    background:#fff8e1; border:1px solid #f39c12; border-radius:10px;
+    padding:14px 18px; margin-bottom:18px; display:flex; align-items:center; gap:12px;
+    font-size:13px; color:#7d5a00;
+  }
+  .banner.hidden { display:none; }
+  .banner-icon { font-size:20px; flex-shrink:0; }
 
   /* 통계 카드 */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .stat-card {
-    background: white;
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    border-top: 3px solid #2563a8;
-  }
-  .stat-card.today { border-top-color: #e67e22; }
-  .stat-card.week  { border-top-color: #27ae60; }
-  .stat-card.month { border-top-color: #8e44ad; }
-  .stat-num  { font-size: 28px; font-weight: 700; color: #1a3c6e; }
-  .stat-card.today .stat-num { color: #e67e22; }
-  .stat-card.week  .stat-num { color: #27ae60; }
-  .stat-card.month .stat-num { color: #8e44ad; }
-  .stat-label { font-size: 12px; color: #888; margin-top: 4px; }
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px; }
+  .stat-card { background:white; border-radius:10px; padding:14px; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,0.08); border-top:3px solid #2563a8; }
+  .stat-card.today { border-top-color:#e67e22; }
+  .stat-card.week  { border-top-color:#27ae60; }
+  .stat-card.month { border-top-color:#8e44ad; }
+  .stat-num  { font-size:26px; font-weight:700; color:#1a3c6e; }
+  .stat-card.today .stat-num { color:#e67e22; }
+  .stat-card.week  .stat-num { color:#27ae60; }
+  .stat-card.month .stat-num { color:#8e44ad; }
+  .stat-label { font-size:12px; color:#888; margin-top:3px; }
 
-  /* 메인 카드 */
-  .card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
-    overflow: hidden;
-  }
-  .card-header {
-    background: #f8f9fa;
-    padding: 14px 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .card-header h2 { font-size: 15px; font-weight: 600; color: #1a3c6e; }
-  .card-body { padding: 20px; }
+  /* 카드 */
+  .card { background:white; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,0.08); margin-bottom:18px; overflow:hidden; }
+  .card-header { background:#f8f9fa; padding:13px 18px; border-bottom:1px solid #eee; display:flex; align-items:center; justify-content:space-between; }
+  .card-header h2 { font-size:14px; font-weight:600; color:#1a3c6e; }
+  .card-body { padding:18px; }
 
   /* 입력 폼 */
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-  .form-group { display: flex; flex-direction: column; gap: 6px; }
-  .form-group.full { grid-column: 1 / -1; }
-  label { font-size: 13px; font-weight: 600; color: #555; }
-  label span.required { color: #e74c3c; margin-left: 2px; }
-  input, textarea, select {
-    border: 1px solid #ddd;
-    border-radius: 7px;
-    padding: 9px 12px;
-    font-size: 14px;
-    font-family: inherit;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    outline: none;
-    background: #fafafa;
-  }
-  input:focus, textarea:focus, select:focus {
-    border-color: #2563a8;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(37,99,168,0.1);
-  }
-  textarea { resize: vertical; min-height: 70px; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  .form-group.full { grid-column:1/-1; }
+  label { font-size:12px; font-weight:600; color:#555; }
+  label span.required { color:#e74c3c; }
+  input,textarea,select { border:1px solid #ddd; border-radius:7px; padding:8px 11px; font-size:13px; font-family:inherit; transition:border-color .2s,box-shadow .2s; outline:none; background:#fafafa; }
+  input:focus,textarea:focus,select:focus { border-color:#2563a8; background:white; box-shadow:0 0 0 3px rgba(37,99,168,.1); }
+  textarea { resize:vertical; min-height:64px; }
+  .form-actions { display:flex; gap:8px; justify-content:flex-end; }
 
-  .form-actions { display: flex; gap: 8px; justify-content: flex-end; }
-  .btn {
-    padding: 9px 20px;
-    border-radius: 7px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .btn-primary  { background: #2563a8; color: white; }
-  .btn-primary:hover  { background: #1a4c8a; }
-  .btn-success  { background: #27ae60; color: white; }
-  .btn-success:hover  { background: #1e8c4d; }
-  .btn-secondary { background: #e9ecef; color: #555; }
-  .btn-secondary:hover { background: #dde1e5; }
-  .btn-danger  { background: #e74c3c; color: white; }
-  .btn-danger:hover  { background: #c0392b; }
-  .btn-warning { background: #f39c12; color: white; }
-  .btn-warning:hover { background: #d68910; }
-  .btn-excel  { background: #1d6f42; color: white; }
-  .btn-excel:hover  { background: #165532; }
-  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  /* 버튼 */
+  .btn { padding:8px 18px; border-radius:7px; border:none; cursor:pointer; font-size:13px; font-weight:600; font-family:inherit; transition:all .2s; display:inline-flex; align-items:center; gap:5px; }
+  .btn-primary   { background:#2563a8; color:white; }
+  .btn-primary:hover   { background:#1a4c8a; }
+  .btn-success   { background:#27ae60; color:white; }
+  .btn-success:hover   { background:#1e8c4d; }
+  .btn-secondary { background:#e9ecef; color:#555; }
+  .btn-secondary:hover { background:#dde1e5; }
+  .btn-danger    { background:#e74c3c; color:white; }
+  .btn-danger:hover    { background:#c0392b; }
+  .btn-warning   { background:#f39c12; color:white; }
+  .btn-warning:hover   { background:#d68910; }
+  .btn-excel     { background:#1d6f42; color:white; }
+  .btn-excel:hover     { background:#165532; }
+  .btn-sm { padding:5px 11px; font-size:12px; }
 
   /* 위반 횟수 배지 */
-  .vcount {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
-    margin-left: 4px;
-  }
-  .vcount-1 { background: #dbeafe; color: #1e40af; }
-  .vcount-2 { background: #fef3c7; color: #92400e; }
-  .vcount-3 { background: #fee2e2; color: #991b1b; }
-  .vcount-4 { background: #dc2626; color: white; }
+  .vcount { display:inline-block; padding:2px 8px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap; }
+  .vcount-1 { background:#dbeafe; color:#1e40af; }
+  .vcount-2 { background:#fef3c7; color:#92400e; }
+  .vcount-3 { background:#fee2e2; color:#991b1b; }
+  .vcount-4 { background:#dc2626; color:white; }
 
-  /* 입력 폼 차량번호 힌트 */
-  #plate-hint {
-    display: none;
-    margin-top: 6px;
-    padding: 8px 12px;
-    border-radius: 7px;
-    font-size: 13px;
-    font-weight: 600;
-    border-left: 4px solid;
-  }
-  #plate-hint.new    { background:#f0fdf4; border-color:#22c55e; color:#15803d; }
-  #plate-hint.warn1  { background:#eff6ff; border-color:#3b82f6; color:#1d4ed8; }
-  #plate-hint.warn2  { background:#fffbeb; border-color:#f59e0b; color:#b45309; }
-  #plate-hint.warn3  { background:#fef2f2; border-color:#ef4444; color:#b91c1c; }
+  /* 입력 힌트 */
+  #plate-hint { display:none; margin-top:5px; padding:7px 11px; border-radius:7px; font-size:12px; font-weight:600; border-left:4px solid; }
+  #plate-hint.new   { background:#f0fdf4; border-color:#22c55e; color:#15803d; }
+  #plate-hint.warn1 { background:#eff6ff; border-color:#3b82f6; color:#1d4ed8; }
+  #plate-hint.warn2 { background:#fffbeb; border-color:#f59e0b; color:#b45309; }
+  #plate-hint.warn3 { background:#fef2f2; border-color:#ef4444; color:#b91c1c; }
 
-  /* 검색·필터 바 */
-  .search-bar {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .search-bar input { flex: 1; min-width: 200px; }
-  .search-bar select { min-width: 130px; }
+  /* 검색 바 */
+  .search-bar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+  .search-bar input { flex:1; min-width:180px; }
 
   /* 테이블 */
-  .table-wrap { overflow-x: auto; }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  thead th { background:#1a3c6e; color:white; padding:10px 13px; text-align:left; font-weight:600; white-space:nowrap; cursor:pointer; user-select:none; }
+  thead th:hover { background:#16336b; }
+  thead th .si { margin-left:3px; opacity:.6; font-size:10px; }
+  tbody tr { border-bottom:1px solid #f0f0f0; transition:background .15s; }
+  tbody tr:hover { background:#f0f5ff; }
+  tbody td { padding:9px 13px; vertical-align:middle; }
+  tbody td.no-data { text-align:center; color:#aaa; padding:36px; }
+  .actions-cell { white-space:nowrap; }
+
+  /* 로딩 오버레이 */
+  #loading {
+    display:none; position:fixed; inset:0;
+    background:rgba(255,255,255,0.7); z-index:3000;
+    align-items:center; justify-content:center; flex-direction:column; gap:12px;
   }
-  thead th {
-    background: #1a3c6e;
-    color: white;
-    padding: 11px 14px;
-    text-align: left;
-    font-weight: 600;
-    white-space: nowrap;
-    cursor: pointer;
-    user-select: none;
-  }
-  thead th:hover { background: #16336b; }
-  thead th .sort-icon { margin-left: 4px; opacity: 0.6; font-size: 11px; }
-  tbody tr { border-bottom: 1px solid #f0f0f0; transition: background 0.15s; }
-  tbody tr:hover { background: #f0f5ff; }
-  tbody tr.editing { background: #fff8e1; }
-  tbody td { padding: 10px 14px; vertical-align: middle; }
-  tbody td.no-data { text-align: center; color: #aaa; padding: 40px; }
-  .actions-cell { white-space: nowrap; }
+  #loading.show { display:flex; }
+  .spinner { width:36px; height:36px; border:4px solid #ddd; border-top-color:#2563a8; border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #loading p { font-size:14px; color:#555; font-weight:600; }
 
   /* 페이지네이션 */
-  .pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 16px;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .pagination-info { font-size: 13px; color: #888; }
-  .page-btns { display: flex; gap: 4px; }
-  .page-btn {
-    width: 32px; height: 32px;
-    border: 1px solid #ddd;
-    background: white;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-  }
-  .page-btn:hover { border-color: #2563a8; color: #2563a8; }
-  .page-btn.active { background: #2563a8; color: white; border-color: #2563a8; }
-  .page-btn:disabled { opacity: 0.4; cursor: default; }
+  .pagination { display:flex; align-items:center; justify-content:space-between; margin-top:14px; flex-wrap:wrap; gap:8px; }
+  .pagination-info { font-size:12px; color:#888; }
+  .page-btns { display:flex; gap:3px; }
+  .page-btn { width:30px; height:30px; border:1px solid #ddd; background:white; border-radius:6px; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+  .page-btn:hover { border-color:#2563a8; color:#2563a8; }
+  .page-btn.active { background:#2563a8; color:white; border-color:#2563a8; }
+  .page-btn:disabled { opacity:.4; cursor:default; }
 
-  /* 모달 */
-  .modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.45);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: white;
-    border-radius: 12px;
-    padding: 28px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-  }
-  .modal h3 { font-size: 17px; margin-bottom: 18px; color: #1a3c6e; }
-  .modal .form-grid { grid-template-columns: 1fr 1fr; }
-  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  /* 모달 공통 */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:1000; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:white; border-radius:12px; padding:26px; width:90%; max-width:500px; box-shadow:0 8px 32px rgba(0,0,0,.18); }
+  .modal h3 { font-size:16px; margin-bottom:16px; color:#1a3c6e; }
+  .modal .form-grid { grid-template-columns:1fr 1fr; }
+  .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+
+  /* Supabase 설정 모달 전용 */
+  .setup-step { background:#f8f9fa; border-radius:8px; padding:14px; margin-bottom:14px; }
+  .setup-step h4 { font-size:13px; font-weight:700; color:#1a3c6e; margin-bottom:8px; }
+  .setup-step ol { padding-left:18px; font-size:12px; color:#555; line-height:1.8; }
+  .setup-step code { background:#e8f0fe; color:#1a3c6e; padding:1px 5px; border-radius:4px; font-family:monospace; font-size:11px; }
+  .setup-step textarea.sql { font-family:monospace; font-size:11px; background:#1e1e1e; color:#d4d4d4; border:none; border-radius:6px; padding:10px; width:100%; margin-top:6px; resize:none; height:90px; }
+  .input-full { width:100%; margin-bottom:10px; }
 
   /* 토스트 */
-  #toast {
-    position: fixed;
-    bottom: 24px; right: 24px;
-    padding: 12px 20px;
-    border-radius: 8px;
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    z-index: 2000;
-    opacity: 0;
-    transform: translateY(16px);
-    transition: all 0.3s;
-    pointer-events: none;
-  }
-  #toast.show { opacity: 1; transform: translateY(0); }
-  #toast.success { background: #27ae60; }
-  #toast.error   { background: #e74c3c; }
-  #toast.info    { background: #2563a8; }
+  #toast { position:fixed; bottom:22px; right:22px; padding:11px 18px; border-radius:8px; color:white; font-size:13px; font-weight:600; z-index:2000; opacity:0; transform:translateY(14px); transition:all .3s; pointer-events:none; }
+  #toast.show { opacity:1; transform:translateY(0); }
+  #toast.success { background:#27ae60; }
+  #toast.error   { background:#e74c3c; }
+  #toast.info    { background:#2563a8; }
 
   /* 인쇄 */
   @media print {
-    header, .stats-row, .card:first-of-type, .search-bar,
-    .form-actions, .actions-cell, .pagination, #toast { display: none !important; }
-    body { background: white; }
-    .card { box-shadow: none; }
-    table { font-size: 12px; }
+    header,.stats-row,.card:first-of-type,.search-bar,.form-actions,.actions-cell,.pagination,#toast,.banner { display:none !important; }
+    body { background:white; }
+    .card { box-shadow:none; }
   }
-
-  @media (max-width: 768px) {
-    .form-grid { grid-template-columns: 1fr 1fr; }
-    .stats-row { grid-template-columns: 1fr 1fr; }
-    .modal .form-grid { grid-template-columns: 1fr; }
+  @media (max-width:768px) {
+    .form-grid { grid-template-columns:1fr 1fr; }
+    .stats-row { grid-template-columns:1fr 1fr; }
+    .modal .form-grid { grid-template-columns:1fr; }
   }
-  @media (max-width: 480px) {
-    .form-grid { grid-template-columns: 1fr; }
-    .stats-row { grid-template-columns: 1fr 1fr; }
+  @media (max-width:480px) {
+    .form-grid { grid-template-columns:1fr; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="icon">🦺</div>
-  <div>
-    <h1>안전보호구 위반차량 관리 시스템</h1>
-    <p>안전모·안전벨트 등 보호구 미착용 차량 기록 관리</p>
+  <div class="header-left">
+    <div class="icon">🦺</div>
+    <div>
+      <h1>안전보호구 위반차량 관리 시스템</h1>
+      <p>안전모·안전벨트 등 보호구 미착용 차량 기록 관리</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="conn-badge disconnected" id="conn-badge" onclick="openSettings()">
+      <div class="conn-dot"></div>
+      <span id="conn-text">미연결 (로컬)</span>
+    </div>
+    <button class="btn-settings" onclick="openSettings()">⚙️ 공유 설정</button>
   </div>
 </header>
 
 <div class="container">
 
+  <!-- 미연결 안내 배너 -->
+  <div class="banner" id="setup-banner">
+    <div class="banner-icon">⚠️</div>
+    <div>
+      <strong>현재 이 컴퓨터에서만 데이터가 저장됩니다.</strong>
+      여러 사람이 함께 쓰려면 <strong>⚙️ 공유 설정</strong> 버튼을 눌러 Supabase를 연결하세요.
+      (무료, 5분 설정)
+    </div>
+  </div>
+
   <!-- 통계 -->
   <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-num" id="stat-total">0</div>
-      <div class="stat-label">전체 건수</div>
-    </div>
-    <div class="stat-card today">
-      <div class="stat-num" id="stat-today">0</div>
-      <div class="stat-label">오늘 건수</div>
-    </div>
-    <div class="stat-card week">
-      <div class="stat-num" id="stat-week">0</div>
-      <div class="stat-label">이번 주 건수</div>
-    </div>
-    <div class="stat-card month">
-      <div class="stat-num" id="stat-month">0</div>
-      <div class="stat-label">이번 달 건수</div>
-    </div>
+    <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">전체 건수</div></div>
+    <div class="stat-card today"><div class="stat-num" id="stat-today">0</div><div class="stat-label">오늘 건수</div></div>
+    <div class="stat-card week"><div class="stat-num" id="stat-week">0</div><div class="stat-label">이번 주 건수</div></div>
+    <div class="stat-card month"><div class="stat-num" id="stat-month">0</div><div class="stat-label">이번 달 건수</div></div>
   </div>
 
   <!-- 입력 폼 -->
   <div class="card">
-    <div class="card-header">
-      <h2>📝 위반 정보 입력</h2>
-    </div>
+    <div class="card-header"><h2>📝 위반 정보 입력</h2></div>
     <div class="card-body">
       <div class="form-grid">
         <div class="form-group">
@@ -341,7 +244,7 @@
         </div>
         <div class="form-group full">
           <label>기타 (위반 내용 등)</label>
-          <textarea id="inp-note" placeholder="안전모 미착용, 안전벨트 미착용, 형광조끼 미착용 등 위반 사항을 입력하세요"></textarea>
+          <textarea id="inp-note" placeholder="안전모 미착용, 안전벨트 미착용, 형광조끼 미착용 등"></textarea>
         </div>
       </div>
       <div class="form-actions">
@@ -355,46 +258,44 @@
   <div class="card">
     <div class="card-header">
       <h2>📋 위반차량 목록</h2>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-excel btn-sm" onclick="exportExcel()">📊 엑셀 내보내기</button>
-        <button class="btn btn-success btn-sm" onclick="exportCSV()">📥 CSV 내보내기</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-excel btn-sm" onclick="exportExcel()">📊 엑셀</button>
+        <button class="btn btn-success btn-sm" onclick="exportCSV()">📥 CSV</button>
         <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 인쇄</button>
+        <button class="btn btn-secondary btn-sm" onclick="loadData()">🔄 새로고침</button>
       </div>
     </div>
     <div class="card-body">
-
-      <div class="search-bar" style="margin-bottom:16px;">
+      <div class="search-bar">
         <input type="text" id="search-input" placeholder="🔍 차량번호, 이름, 전화번호로 검색..." oninput="renderTable()">
         <input type="date" id="filter-date-from" onchange="renderTable()" title="시작 날짜">
-        <span style="font-size:13px;color:#888;">~</span>
-        <input type="date" id="filter-date-to" onchange="renderTable()" title="종료 날짜">
-        <button class="btn btn-secondary btn-sm" onclick="clearFilters()">필터 초기화</button>
+        <span style="font-size:12px;color:#888">~</span>
+        <input type="date" id="filter-date-to"   onchange="renderTable()" title="종료 날짜">
+        <button class="btn btn-secondary btn-sm" onclick="clearFilters()">초기화</button>
       </div>
-
       <div class="table-wrap">
         <table id="main-table">
           <thead>
             <tr>
-              <th onclick="sortBy('no')" style="width:50px">No <span class="sort-icon">▲</span></th>
-              <th onclick="sortBy('date')" style="width:110px">날짜 <span class="sort-icon"></span></th>
-              <th onclick="sortBy('plate')" style="width:120px">차량번호 <span class="sort-icon"></span></th>
-              <th onclick="sortBy('vcount')" style="width:90px;text-align:center">위반횟수 <span class="sort-icon"></span></th>
-              <th onclick="sortBy('name')" style="width:100px">이름 <span class="sort-icon"></span></th>
-              <th onclick="sortBy('phone')" style="width:140px">핸드폰 번호 <span class="sort-icon"></span></th>
+              <th onclick="sortBy('no')"     style="width:48px">No <span class="si">▲</span></th>
+              <th onclick="sortBy('date')"   style="width:108px">날짜 <span class="si"></span></th>
+              <th onclick="sortBy('plate')"  style="width:118px">차량번호 <span class="si"></span></th>
+              <th onclick="sortBy('vcount')" style="width:88px;text-align:center">위반횟수 <span class="si"></span></th>
+              <th onclick="sortBy('name')"   style="width:96px">이름 <span class="si"></span></th>
+              <th onclick="sortBy('phone')"  style="width:136px">핸드폰 번호 <span class="si"></span></th>
               <th>기타</th>
-              <th style="width:110px" class="actions-cell">관리</th>
+              <th style="width:108px" class="actions-cell">관리</th>
             </tr>
           </thead>
           <tbody id="table-body">
-            <tr><td colspan="8" class="no-data">등록된 위반 기록이 없습니다.</td></tr>
+            <tr><td colspan="8" class="no-data">데이터를 불러오는 중...</td></tr>
           </tbody>
         </table>
       </div>
-
       <div class="pagination">
         <div class="pagination-info" id="page-info">총 0건</div>
         <div class="page-btns" id="page-btns"></div>
-        <select id="per-page" onchange="perPage=+this.value;currentPage=1;renderTable()" style="width:90px;padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid #ddd;">
+        <select id="per-page" onchange="perPage=+this.value;currentPage=1;renderTable()" style="width:86px;padding:5px 8px;font-size:12px;border-radius:6px;border:1px solid #ddd;">
           <option value="10">10개씩</option>
           <option value="20" selected>20개씩</option>
           <option value="50">50개씩</option>
@@ -403,7 +304,6 @@
       </div>
     </div>
   </div>
-
 </div>
 
 <!-- 수정 모달 -->
@@ -411,459 +311,482 @@
   <div class="modal">
     <h3>✏️ 위반 정보 수정</h3>
     <div class="form-grid">
-      <div class="form-group">
-        <label>날짜<span class="required">*</span></label>
-        <input type="date" id="edit-date">
-      </div>
-      <div class="form-group">
-        <label>차량번호<span class="required">*</span></label>
-        <input type="text" id="edit-plate" placeholder="예) 12가 3456" maxlength="12">
-      </div>
-      <div class="form-group">
-        <label>이름</label>
-        <input type="text" id="edit-name" placeholder="운전자 이름" maxlength="20">
-      </div>
-      <div class="form-group">
-        <label>핸드폰 번호</label>
-        <input type="tel" id="edit-phone" placeholder="010-0000-0000" maxlength="13">
-      </div>
-      <div class="form-group full">
-        <label>기타</label>
-        <textarea id="edit-note"></textarea>
-      </div>
+      <div class="form-group"><label>날짜<span class="required">*</span></label><input type="date" id="edit-date"></div>
+      <div class="form-group"><label>차량번호<span class="required">*</span></label><input type="text" id="edit-plate" maxlength="12"></div>
+      <div class="form-group"><label>이름</label><input type="text" id="edit-name" maxlength="20"></div>
+      <div class="form-group"><label>핸드폰 번호</label><input type="tel" id="edit-phone" maxlength="13"></div>
+      <div class="form-group full"><label>기타</label><textarea id="edit-note"></textarea></div>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+      <button class="btn btn-secondary" onclick="closeEditModal()">취소</button>
       <button class="btn btn-primary" onclick="saveEdit()">💾 저장</button>
     </div>
   </div>
 </div>
 
+<!-- ⚙️ Supabase 설정 모달 -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal" style="max-width:580px;">
+    <h3>⚙️ 공유 데이터베이스 설정 (Supabase)</h3>
+
+    <div class="setup-step">
+      <h4>① Supabase 무료 계정 만들기</h4>
+      <ol>
+        <li><a href="https://supabase.com" target="_blank">supabase.com</a>에서 무료 가입 → 새 프로젝트 생성</li>
+        <li>왼쪽 메뉴 <strong>SQL Editor</strong> 클릭 → 아래 SQL 붙여넣기 후 실행(▶)</li>
+      </ol>
+      <textarea class="sql" readonly>
+CREATE TABLE violations (
+  id bigint primary key generated always as identity,
+  no integer, date text, plate text not null,
+  name text default '', phone text default '', note text default '',
+  created_at timestamptz default now()
+);
+ALTER TABLE violations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public_all" ON violations FOR ALL TO anon USING (true) WITH CHECK (true);</textarea>
+      <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="copySQL()">📋 SQL 복사</button>
+    </div>
+
+    <div class="setup-step">
+      <h4>② 연결 정보 입력</h4>
+      <ol>
+        <li>왼쪽 메뉴 <strong>Project Settings → API</strong> 클릭</li>
+        <li><em>Project URL</em>과 <em>anon public</em> 키를 아래에 붙여넣기</li>
+      </ol>
+      <input type="url" id="sb-url" class="input-full" placeholder="https://xxxxxxxxxxxx.supabase.co">
+      <input type="text" id="sb-key" class="input-full" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" onclick="disconnectSupabase()">연결 해제</button>
+      <button class="btn btn-secondary" onclick="closeSettings()">취소</button>
+      <button class="btn btn-primary" onclick="connectSupabase()">🔗 연결 테스트 &amp; 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 로딩 -->
+<div id="loading"><div class="spinner"></div><p id="loading-msg">처리 중...</p></div>
 <!-- 토스트 -->
 <div id="toast"></div>
 
 <script>
-// ── HTML 이스케이프 ───────────────────────────────────────────
-function escHtml(str) {
-  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// ── 유틸 ──────────────────────────────────────────────────────
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function weekStart(){ const d=new Date(); d.setDate(d.getDate()-d.getDay()+1); return d.toISOString().slice(0,10); }
+function monthStart(){ return todayStr().slice(0,7)+'-01'; }
+function fmtPhone(v){ const n=v.replace(/\D/g,''); if(n.length<=3)return n; if(n.length<=7)return n.slice(0,3)+'-'+n.slice(3); return n.slice(0,3)+'-'+n.slice(3,7)+'-'+n.slice(7,11); }
 
-// ── 데이터 스토어 ─────────────────────────────────────────────
+// ── 설정 스토어 ───────────────────────────────────────────────
 const STORAGE_KEY = 'safety_violations_v1';
+let SB_URL = localStorage.getItem('sb_url') || '';
+let SB_KEY = localStorage.getItem('sb_key') || '';
+function isCloud(){ return !!(SB_URL && SB_KEY); }
+
+// ── 상태 ──────────────────────────────────────────────────────
 let records = [];
 let editingId = null;
-let sortKey = 'no';
-let sortAsc = true;
-let currentPage = 1;
-let perPage = 20;
+let sortKey = 'no', sortAsc = true;
+let currentPage = 1, perPage = 20;
 
-function load() {
-  try { records = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch(e) { records = []; }
-}
-function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-}
-
-// ── 날짜 유틸 ─────────────────────────────────────────────────
-function todayStr() { return new Date().toISOString().slice(0,10); }
-function weekStart() {
-  const d = new Date(); d.setDate(d.getDate() - d.getDay() + 1);
-  return d.toISOString().slice(0,10);
-}
-function monthStart() { return todayStr().slice(0,7) + '-01'; }
-
-// ── 전화번호 자동 포맷 ─────────────────────────────────────────
-function fmtPhone(val) {
-  const n = val.replace(/\D/g,'');
-  if(n.length<=3) return n;
-  if(n.length<=7) return n.slice(0,3)+'-'+n.slice(3);
-  return n.slice(0,3)+'-'+n.slice(3,7)+'-'+n.slice(7,11);
-}
-document.getElementById('inp-phone').addEventListener('input', e => {
-  const pos = e.target.selectionStart;
-  e.target.value = fmtPhone(e.target.value);
-});
-document.getElementById('edit-phone').addEventListener('input', e => {
-  e.target.value = fmtPhone(e.target.value);
-});
-
-// ── 차량번호 위반 횟수 카운트 ────────────────────────────────────
-function countViolations(plate) {
-  if(!plate) return 0;
-  const p = plate.trim().toUpperCase();
-  return records.filter(r => r.plate === p).length;
-}
-
-function updatePlateHint() {
-  const plate = document.getElementById('inp-plate').value.trim().toUpperCase();
-  const hint  = document.getElementById('plate-hint');
-  if(!plate) { hint.style.display = 'none'; return; }
-  const cnt = countViolations(plate);
-  hint.style.display = 'block';
-  if(cnt === 0) {
-    hint.className = 'new';
-    hint.textContent = '✅ 첫 번째 위반 등록입니다.';
-  } else if(cnt === 1) {
-    hint.className = 'warn1';
-    hint.textContent = `⚠️ 이 차량은 기존에 ${cnt}회 위반 기록이 있습니다.`;
-  } else if(cnt === 2) {
-    hint.className = 'warn2';
-    hint.textContent = `⚠️ 이 차량은 기존에 ${cnt}회 위반 기록이 있습니다! 주의 대상 차량입니다.`;
+// ── 연결 상태 표시 ────────────────────────────────────────────
+function updateConnBadge(){
+  const badge = document.getElementById('conn-badge');
+  const text  = document.getElementById('conn-text');
+  const banner= document.getElementById('setup-banner');
+  if(isCloud()){
+    badge.className = 'conn-badge connected';
+    text.textContent = '클라우드 공유 중';
+    banner.classList.add('hidden');
   } else {
-    hint.className = 'warn3';
-    hint.textContent = `🚨 이 차량은 기존에 ${cnt}회 위반 기록이 있습니다! 상습 위반 차량입니다.`;
+    badge.className = 'conn-badge disconnected';
+    text.textContent = '미연결 (로컬)';
+    banner.classList.remove('hidden');
   }
 }
 
+// ── Supabase REST 헬퍼 ────────────────────────────────────────
+async function sbFetch(path, opts={}){
+  const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers:{
+      'apikey': SB_KEY,
+      'Authorization': `Bearer ${SB_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+      ...(opts.headers||{})
+    }
+  });
+  const txt = await res.text();
+  if(!res.ok) throw new Error(`Supabase ${res.status}: ${txt}`);
+  return txt ? JSON.parse(txt) : [];
+}
+
+// ── 데이터 로드 ───────────────────────────────────────────────
+async function loadData(){
+  showLoading('데이터 불러오는 중...');
+  try {
+    if(isCloud()){
+      records = await sbFetch('violations?order=no.asc');
+    } else {
+      records = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+    }
+  } catch(e) {
+    showToast('로드 실패: '+e.message,'error');
+    records = [];
+  }
+  hideLoading();
+  renderTable();
+  updateStats();
+}
+
+// ── 로컬 저장 (비클라우드용) ──────────────────────────────────
+function saveLocal(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
+
 // ── 등록 ──────────────────────────────────────────────────────
-function addRecord() {
+async function addRecord(){
   const date  = document.getElementById('inp-date').value.trim();
   const plate = document.getElementById('inp-plate').value.trim().toUpperCase();
   const name  = document.getElementById('inp-name').value.trim();
   const phone = document.getElementById('inp-phone').value.trim();
   const note  = document.getElementById('inp-note').value.trim();
-
   if(!date)  { showToast('날짜를 입력해 주세요.','error'); return; }
   if(!plate) { showToast('차량번호를 입력해 주세요.','error'); return; }
 
-  const rec = {
-    id: Date.now(),
-    no: records.length + 1,
-    date, plate, name, phone, note,
-    createdAt: new Date().toISOString()
-  };
-  records.push(rec);
-  save();
-  clearForm();
-  renderTable();
-  updateStats();
-  showToast('위반 기록이 등록되었습니다.','success');
+  showLoading('등록 중...');
+  try {
+    if(isCloud()){
+      const nextNo = records.length ? Math.max(...records.map(r=>r.no||0))+1 : 1;
+      const [row] = await sbFetch('violations', {
+        method:'POST',
+        body: JSON.stringify({no:nextNo, date, plate, name, phone, note})
+      });
+      records.push(row);
+    } else {
+      const rec = {id:Date.now(), no:records.length+1, date, plate, name, phone, note, created_at:new Date().toISOString()};
+      records.push(rec);
+      saveLocal();
+    }
+    clearForm();
+    renderTable();
+    updateStats();
+    showToast('위반 기록이 등록되었습니다.','success');
+  } catch(e){ showToast('등록 실패: '+e.message,'error'); }
+  hideLoading();
 }
 
-function clearForm() {
+function clearForm(){
   document.getElementById('inp-date').value = todayStr();
-  ['inp-plate','inp-name','inp-phone','inp-note'].forEach(id => document.getElementById(id).value='');
-  document.getElementById('plate-hint').style.display = 'none';
+  ['inp-plate','inp-name','inp-phone','inp-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('plate-hint').style.display='none';
 }
 
 // ── 삭제 ──────────────────────────────────────────────────────
-function deleteRecord(id) {
+async function deleteRecord(id){
   if(!confirm('이 기록을 삭제하시겠습니까?')) return;
-  records = records.filter(r => r.id !== id);
-  // no 재정렬
-  records.forEach((r,i) => r.no = i+1);
-  save();
-  renderTable();
-  updateStats();
-  showToast('삭제되었습니다.','info');
+  showLoading('삭제 중...');
+  try {
+    if(isCloud()){
+      await sbFetch(`violations?id=eq.${id}`, {method:'DELETE'});
+      records = records.filter(r=>r.id!==id);
+      // no 재정렬 (클라우드 반영)
+      for(let i=0;i<records.length;i++){
+        if(records[i].no!==i+1){
+          records[i].no=i+1;
+          sbFetch(`violations?id=eq.${records[i].id}`,{method:'PATCH',body:JSON.stringify({no:i+1})}).catch(()=>{});
+        }
+      }
+    } else {
+      records = records.filter(r=>r.id!==id);
+      records.forEach((r,i)=>r.no=i+1);
+      saveLocal();
+    }
+    renderTable();
+    updateStats();
+    showToast('삭제되었습니다.','info');
+  } catch(e){ showToast('삭제 실패: '+e.message,'error'); }
+  hideLoading();
 }
 
-// ── 수정 모달 ────────────────────────────────────────────────
-function openEdit(id) {
-  const r = records.find(r => r.id === id);
+// ── 수정 ──────────────────────────────────────────────────────
+function openEdit(id){
+  const r = records.find(r=>r.id===id);
   if(!r) return;
   editingId = id;
-  document.getElementById('edit-date').value  = r.date;
-  document.getElementById('edit-plate').value = r.plate;
-  document.getElementById('edit-name').value  = r.name;
-  document.getElementById('edit-phone').value = r.phone;
-  document.getElementById('edit-note').value  = r.note;
+  document.getElementById('edit-date').value  = r.date||'';
+  document.getElementById('edit-plate').value = r.plate||'';
+  document.getElementById('edit-name').value  = r.name||'';
+  document.getElementById('edit-phone').value = r.phone||'';
+  document.getElementById('edit-note').value  = r.note||'';
   document.getElementById('edit-modal').classList.add('open');
 }
-function closeModal() {
+function closeEditModal(){
   document.getElementById('edit-modal').classList.remove('open');
-  editingId = null;
+  editingId=null;
 }
-function saveEdit() {
+async function saveEdit(){
   const date  = document.getElementById('edit-date').value.trim();
   const plate = document.getElementById('edit-plate').value.trim().toUpperCase();
   if(!date)  { showToast('날짜를 입력해 주세요.','error'); return; }
   if(!plate) { showToast('차량번호를 입력해 주세요.','error'); return; }
-  const r = records.find(r => r.id === editingId);
-  if(!r) return;
-  r.date  = date;
-  r.plate = plate;
-  r.name  = document.getElementById('edit-name').value.trim();
-  r.phone = document.getElementById('edit-phone').value.trim();
-  r.note  = document.getElementById('edit-note').value.trim();
-  save();
-  closeModal();
-  renderTable();
-  updateStats();
-  showToast('수정되었습니다.','success');
+  const patch = { date, plate,
+    name:  document.getElementById('edit-name').value.trim(),
+    phone: document.getElementById('edit-phone').value.trim(),
+    note:  document.getElementById('edit-note').value.trim() };
+  showLoading('저장 중...');
+  try {
+    if(isCloud()){
+      await sbFetch(`violations?id=eq.${editingId}`,{method:'PATCH',body:JSON.stringify(patch)});
+    }
+    const r = records.find(r=>r.id===editingId);
+    if(r) Object.assign(r,patch);
+    if(!isCloud()) saveLocal();
+    closeEditModal();
+    renderTable();
+    updateStats();
+    showToast('수정되었습니다.','success');
+  } catch(e){ showToast('수정 실패: '+e.message,'error'); }
+  hideLoading();
 }
-// 모달 외부 클릭 닫기
-document.getElementById('edit-modal').addEventListener('click', e => {
-  if(e.target === e.currentTarget) closeModal();
-});
+
+// ── 위반 횟수 카운트 & 힌트 ──────────────────────────────────
+function countViolations(plate){
+  if(!plate) return 0;
+  return records.filter(r=>r.plate===plate.trim().toUpperCase()).length;
+}
+function updatePlateHint(){
+  const plate = document.getElementById('inp-plate').value.trim().toUpperCase();
+  const hint  = document.getElementById('plate-hint');
+  if(!plate){ hint.style.display='none'; return; }
+  const cnt = countViolations(plate);
+  hint.style.display='block';
+  if(cnt===0){ hint.className='new'; hint.textContent='✅ 첫 번째 위반 등록입니다.'; }
+  else if(cnt===1){ hint.className='warn1'; hint.textContent=`⚠️ 기존 ${cnt}회 위반 기록이 있습니다.`; }
+  else if(cnt===2){ hint.className='warn2'; hint.textContent=`⚠️ 기존 ${cnt}회 위반! 주의 대상 차량입니다.`; }
+  else { hint.className='warn3'; hint.textContent=`🚨 기존 ${cnt}회 위반! 상습 위반 차량입니다.`; }
+}
 
 // ── 정렬 ──────────────────────────────────────────────────────
-function sortBy(key) {
-  if(sortKey === key) sortAsc = !sortAsc;
-  else { sortKey = key; sortAsc = true; }
+function sortBy(key){
+  if(sortKey===key) sortAsc=!sortAsc; else { sortKey=key; sortAsc=true; }
   renderTable();
 }
 
 // ── 필터 초기화 ───────────────────────────────────────────────
-function clearFilters() {
-  document.getElementById('search-input').value = '';
-  document.getElementById('filter-date-from').value = '';
-  document.getElementById('filter-date-to').value = '';
+function clearFilters(){
+  document.getElementById('search-input').value='';
+  document.getElementById('filter-date-from').value='';
+  document.getElementById('filter-date-to').value='';
   renderTable();
 }
 
 // ── 렌더링 ────────────────────────────────────────────────────
-function renderTable() {
-  const q     = document.getElementById('search-input').value.toLowerCase();
-  const from  = document.getElementById('filter-date-from').value;
-  const to    = document.getElementById('filter-date-to').value;
+function renderTable(){
+  const q    = document.getElementById('search-input').value.toLowerCase();
+  const from = document.getElementById('filter-date-from').value;
+  const to   = document.getElementById('filter-date-to').value;
 
-  let filtered = records.filter(r => {
-    const matchQ = !q || r.plate.toLowerCase().includes(q) ||
-                   r.name.toLowerCase().includes(q) ||
-                   r.phone.includes(q) ||
-                   r.note.toLowerCase().includes(q);
-    const matchFrom = !from || r.date >= from;
-    const matchTo   = !to   || r.date <= to;
-    return matchQ && matchFrom && matchTo;
+  let filtered = records.filter(r=>{
+    const mq = !q || (r.plate||'').toLowerCase().includes(q)||(r.name||'').toLowerCase().includes(q)||(r.phone||'').includes(q)||(r.note||'').toLowerCase().includes(q);
+    return mq && (!from||r.date>=from) && (!to||r.date<=to);
   });
 
-  // 차량번호별 위반 횟수 맵 (정렬용)
-  const vcountMap = {};
-  records.forEach(r => { vcountMap[r.plate] = (vcountMap[r.plate] || 0) + 1; });
+  // vcount 맵
+  const vcMap={};
+  records.forEach(r=>{ vcMap[r.plate]=(vcMap[r.plate]||0)+1; });
 
-  // 정렬
-  filtered.sort((a,b) => {
-    let va, vb;
-    if(sortKey === 'vcount') {
-      va = vcountMap[a.plate] || 0;
-      vb = vcountMap[b.plate] || 0;
-    } else {
-      va = a[sortKey] ?? a.no;
-      vb = b[sortKey] ?? b.no;
-    }
-    if(typeof va === 'string') va = va.toLowerCase();
-    if(typeof vb === 'string') vb = vb.toLowerCase();
-    return (va < vb ? -1 : va > vb ? 1 : 0) * (sortAsc ? 1 : -1);
+  filtered.sort((a,b)=>{
+    let va,vb;
+    if(sortKey==='vcount'){ va=vcMap[a.plate]||0; vb=vcMap[b.plate]||0; }
+    else { va=a[sortKey]??a.no; vb=b[sortKey]??b.no; }
+    if(typeof va==='string') va=va.toLowerCase();
+    if(typeof vb==='string') vb=vb.toLowerCase();
+    return (va<vb?-1:va>vb?1:0)*(sortAsc?1:-1);
   });
 
-  // 정렬 아이콘 업데이트
-  document.querySelectorAll('thead th .sort-icon').forEach(el => el.textContent='');
-  document.querySelectorAll('thead th').forEach(th => {
-    const key = th.getAttribute('onclick')?.match(/sortBy\('(.+)'\)/)?.[1];
-    if(key === sortKey) {
-      th.querySelector('.sort-icon').textContent = sortAsc ? ' ▲' : ' ▼';
-    }
+  // 정렬 아이콘
+  document.querySelectorAll('thead th .si').forEach(el=>el.textContent='');
+  document.querySelectorAll('thead th').forEach(th=>{
+    const k=th.getAttribute('onclick')?.match(/sortBy\('(.+)'\)/)?.[1];
+    if(k===sortKey) th.querySelector('.si').textContent=sortAsc?' ▲':' ▼';
   });
 
-  // 페이지네이션
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / perPage));
-  if(currentPage > totalPages) currentPage = totalPages;
-  const start = (currentPage-1) * perPage;
-  const pageData = filtered.slice(start, start+perPage);
+  const total=filtered.length;
+  const totalPages=Math.max(1,Math.ceil(total/perPage));
+  if(currentPage>totalPages) currentPage=totalPages;
+  const start=(currentPage-1)*perPage;
+  const pageData=filtered.slice(start,start+perPage);
 
-  // 테이블 바디
-  const tbody = document.getElementById('table-body');
-  if(total === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="no-data">조회된 기록이 없습니다.</td></tr>';
+  const tbody=document.getElementById('table-body');
+  if(total===0){
+    tbody.innerHTML='<tr><td colspan="8" class="no-data">조회된 기록이 없습니다.</td></tr>';
   } else {
-    // 차량번호별 전체 위반 횟수 맵 (필터 무관, 전체 records 기준)
-    const vcountMap = {};
-    records.forEach(r => {
-      vcountMap[r.plate] = (vcountMap[r.plate] || 0) + 1;
-    });
-    tbody.innerHTML = pageData.map(r => {
-      const cnt = vcountMap[r.plate] || 1;
-      const badgeCls = cnt >= 4 ? 'vcount-4' : cnt === 3 ? 'vcount-3' : cnt === 2 ? 'vcount-2' : 'vcount-1';
-      return `
-      <tr>
-        <td style="color:#aaa;font-size:12px">${r.no}</td>
-        <td>${r.date}</td>
+    tbody.innerHTML=pageData.map(r=>{
+      const cnt=vcMap[r.plate]||1;
+      const bc=cnt>=4?'vcount-4':cnt===3?'vcount-3':cnt===2?'vcount-2':'vcount-1';
+      return `<tr>
+        <td style="color:#aaa;font-size:11px">${r.no}</td>
+        <td>${r.date||''}</td>
         <td><strong>${escHtml(r.plate)}</strong></td>
-        <td style="text-align:center"><span class="vcount ${badgeCls}">${cnt}회</span></td>
+        <td style="text-align:center"><span class="vcount ${bc}">${cnt}회</span></td>
         <td>${escHtml(r.name)}</td>
         <td>${escHtml(r.phone)}</td>
-        <td style="max-width:240px;white-space:pre-wrap;word-break:break-all">${escHtml(r.note)}</td>
+        <td style="max-width:220px;white-space:pre-wrap;word-break:break-all;font-size:12px">${escHtml(r.note)}</td>
         <td class="actions-cell">
-          <button class="btn btn-warning btn-sm" onclick="openEdit(${r.id})">✏️ 수정</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})" style="margin-top:2px">🗑</button>
+          <button class="btn btn-warning btn-sm" onclick="openEdit(${r.id})">✏️</button>
+          <button class="btn btn-danger btn-sm"  onclick="deleteRecord(${r.id})">🗑</button>
         </td>
       </tr>`;
     }).join('');
   }
 
-  // 페이지네이션
-  document.getElementById('page-info').textContent =
-    `총 ${total}건 (${start+1}~${Math.min(start+perPage, total)}번째)`;
-
-  const pb = document.getElementById('page-btns');
-  pb.innerHTML = '';
-  const addBtn = (label, page, disabled, active) => {
-    const b = document.createElement('button');
-    b.className = 'page-btn' + (active?' active':'');
-    b.textContent = label;
-    b.disabled = disabled;
-    if(!disabled) b.onclick = () => { currentPage = page; renderTable(); };
+  document.getElementById('page-info').textContent=`총 ${total}건 (${start+1}~${Math.min(start+perPage,total)})`;
+  const pb=document.getElementById('page-btns');
+  pb.innerHTML='';
+  const addBtn=(lbl,pg,dis,act)=>{
+    const b=document.createElement('button');
+    b.className='page-btn'+(act?' active':'');
+    b.textContent=lbl; b.disabled=dis;
+    if(!dis) b.onclick=()=>{ currentPage=pg; renderTable(); };
     pb.appendChild(b);
   };
-  addBtn('◀', currentPage-1, currentPage===1, false);
-  for(let p = Math.max(1,currentPage-2); p <= Math.min(totalPages,currentPage+2); p++) {
-    addBtn(p, p, false, p===currentPage);
-  }
-  addBtn('▶', currentPage+1, currentPage===totalPages, false);
+  addBtn('◀',currentPage-1,currentPage===1,false);
+  for(let p=Math.max(1,currentPage-2);p<=Math.min(totalPages,currentPage+2);p++) addBtn(p,p,false,p===currentPage);
+  addBtn('▶',currentPage+1,currentPage===totalPages,false);
 }
 
 // ── 통계 ──────────────────────────────────────────────────────
-function updateStats() {
-  const today = todayStr();
-  const wStart = weekStart();
-  const mStart = monthStart();
-  document.getElementById('stat-total').textContent = records.length;
-  document.getElementById('stat-today').textContent = records.filter(r=>r.date===today).length;
-  document.getElementById('stat-week').textContent  = records.filter(r=>r.date>=wStart).length;
-  document.getElementById('stat-month').textContent = records.filter(r=>r.date>=mStart).length;
+function updateStats(){
+  const today=todayStr(), wS=weekStart(), mS=monthStart();
+  document.getElementById('stat-total').textContent=records.length;
+  document.getElementById('stat-today').textContent=records.filter(r=>r.date===today).length;
+  document.getElementById('stat-week').textContent=records.filter(r=>r.date>=wS).length;
+  document.getElementById('stat-month').textContent=records.filter(r=>r.date>=mS).length;
 }
 
-// ── 엑셀 내보내기 (SheetJS) ────────────────────────────────────
-function exportExcel() {
-  if(records.length === 0) { showToast('내보낼 데이터가 없습니다.','error'); return; }
-
-  // 데이터 준비
-  const exVcountMap = {};
-  records.forEach(r => { exVcountMap[r.plate] = (exVcountMap[r.plate] || 0) + 1; });
-
-  const headers = ['No', '날짜', '차량번호', '위반횟수', '이름', '핸드폰번호', '기타'];
-  const rows = records.map(r => [
-    r.no,
-    r.date,
-    r.plate,
-    exVcountMap[r.plate] || 1,
-    r.name  || '',
-    r.phone || '',
-    r.note  || ''
-  ]);
-
-  // 워크시트 생성
-  const wsData = [headers, ...rows];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // 열 너비 설정
-  ws['!cols'] = [
-    { wch: 6  },  // No
-    { wch: 12 },  // 날짜
-    { wch: 14 },  // 차량번호
-    { wch: 10 },  // 위반횟수
-    { wch: 10 },  // 이름
-    { wch: 16 },  // 핸드폰번호
-    { wch: 40 },  // 기타
-  ];
-
-  // 헤더 스타일 (배경색·볼드)
-  const headerStyle = {
-    font: { bold: true, color: { rgb: 'FFFFFF' } },
-    fill: { fgColor: { rgb: '1A3C6E' } },
-    alignment: { horizontal: 'center', vertical: 'center' },
-    border: {
-      top:    { style: 'thin', color: { rgb: 'AAAAAA' } },
-      bottom: { style: 'thin', color: { rgb: 'AAAAAA' } },
-      left:   { style: 'thin', color: { rgb: 'AAAAAA' } },
-      right:  { style: 'thin', color: { rgb: 'AAAAAA' } },
-    }
-  };
-  const cellStyle = {
-    alignment: { vertical: 'center', wrapText: true },
-    border: {
-      top:    { style: 'thin', color: { rgb: 'DDDDDD' } },
-      bottom: { style: 'thin', color: { rgb: 'DDDDDD' } },
-      left:   { style: 'thin', color: { rgb: 'DDDDDD' } },
-      right:  { style: 'thin', color: { rgb: 'DDDDDD' } },
-    }
-  };
-  const altRowStyle = {
-    ...cellStyle,
-    fill: { fgColor: { rgb: 'F0F5FF' } }
-  };
-
-  // 스타일 적용
-  const range = XLSX.utils.decode_range(ws['!ref']);
-  for(let R = range.s.r; R <= range.e.r; R++) {
-    for(let C = range.s.c; C <= range.e.c; C++) {
-      const addr = XLSX.utils.encode_cell({ r: R, c: C });
-      if(!ws[addr]) ws[addr] = { v: '', t: 's' };
-      ws[addr].s = R === 0
-        ? headerStyle
-        : (R % 2 === 0 ? altRowStyle : cellStyle);
+// ── 엑셀 내보내기 ─────────────────────────────────────────────
+function exportExcel(){
+  if(!records.length){ showToast('내보낼 데이터가 없습니다.','error'); return; }
+  const vcMap={}; records.forEach(r=>{ vcMap[r.plate]=(vcMap[r.plate]||0)+1; });
+  const headers=['No','날짜','차량번호','위반횟수','이름','핸드폰번호','기타'];
+  const rows=records.map(r=>[r.no,r.date,r.plate,vcMap[r.plate]||1,r.name||'',r.phone||'',r.note||'']);
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  ws['!cols']=[{wch:5},{wch:12},{wch:14},{wch:9},{wch:10},{wch:15},{wch:38}];
+  const hStyle={font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1A3C6E'}},alignment:{horizontal:'center'}};
+  const cStyle={alignment:{vertical:'center',wrapText:true}};
+  const aStyle={...cStyle,fill:{fgColor:{rgb:'F0F5FF'}}};
+  const rng=XLSX.utils.decode_range(ws['!ref']);
+  for(let R=rng.s.r;R<=rng.e.r;R++){
+    for(let C=rng.s.c;C<=rng.e.c;C++){
+      const addr=XLSX.utils.encode_cell({r:R,c:C});
+      if(!ws[addr]) ws[addr]={v:'',t:'s'};
+      ws[addr].s=R===0?hStyle:(R%2===0?aStyle:cStyle);
     }
   }
-
-  // 워크북 생성 및 다운로드
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '위반차량목록');
-
-  // 요약 시트 추가
-  const today = todayStr();
-  const wStart = weekStart();
-  const mStart = monthStart();
-  const summaryData = [
-    ['항목', '건수'],
-    ['전체 건수', records.length],
-    ['오늘 건수', records.filter(r=>r.date===today).length],
-    ['이번 주 건수', records.filter(r=>r.date>=wStart).length],
-    ['이번 달 건수', records.filter(r=>r.date>=mStart).length],
-    ['', ''],
-    ['내보낸 일시', new Date().toLocaleString('ko-KR')],
-  ];
-  const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
-  ws2['!cols'] = [{ wch: 16 }, { wch: 12 }];
-  XLSX.utils.book_append_sheet(wb, ws2, '통계요약');
-
-  XLSX.writeFile(wb, `안전보호구위반차량_${todayStr()}.xlsx`);
-  showToast('엑셀 파일이 다운로드되었습니다.', 'success');
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'위반차량목록');
+  const today=todayStr(),wS=weekStart(),mS=monthStart();
+  const ws2=XLSX.utils.aoa_to_sheet([['항목','건수'],['전체',records.length],['오늘',records.filter(r=>r.date===today).length],['이번주',records.filter(r=>r.date>=wS).length],['이번달',records.filter(r=>r.date>=mS).length],['',''],['내보낸 일시',new Date().toLocaleString('ko-KR')]]);
+  ws2['!cols']=[{wch:14},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws2,'통계요약');
+  XLSX.writeFile(wb,`안전보호구위반차량_${todayStr()}.xlsx`);
+  showToast('엑셀 파일이 다운로드되었습니다.','success');
 }
 
-// ── CSV 내보내기 ───────────────────────────────────────────────
-function exportCSV() {
-  if(records.length === 0) { showToast('내보낼 데이터가 없습니다.','error'); return; }
-  const BOM = '﻿';
-  const header = ['No','날짜','차량번호','이름','핸드폰번호','기타'];
-  const rows = records.map(r => [
-    r.no, r.date, r.plate, r.name, r.phone,
-    '"' + (r.note||'').replace(/"/g,'""') + '"'
-  ]);
-  const csv = BOM + [header,...rows].map(r=>r.join(',')).join('\r\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `안전보호구위반차량_${todayStr()}.csv`;
+// ── CSV 내보내기 ──────────────────────────────────────────────
+function exportCSV(){
+  if(!records.length){ showToast('내보낼 데이터가 없습니다.','error'); return; }
+  const BOM='﻿';
+  const h=['No','날짜','차량번호','이름','핸드폰번호','기타'];
+  const rows=records.map(r=>[r.no,r.date,r.plate,r.name,r.phone,'"'+(r.note||'').replace(/"/g,'""')+'"']);
+  const csv=BOM+[h,...rows].map(r=>r.join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`안전보호구위반차량_${todayStr()}.csv`;
   a.click();
-  URL.revokeObjectURL(url);
   showToast('CSV 파일이 다운로드되었습니다.','success');
 }
 
-// ── 토스트 ────────────────────────────────────────────────────
-let toastTimer;
-function showToast(msg, type='info') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `show ${type}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.className = ''; }, 2500);
+// ── 설정 모달 ─────────────────────────────────────────────────
+function openSettings(){
+  document.getElementById('sb-url').value=SB_URL;
+  document.getElementById('sb-key').value=SB_KEY;
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings(){ document.getElementById('settings-modal').classList.remove('open'); }
+
+async function connectSupabase(){
+  const url=document.getElementById('sb-url').value.trim().replace(/\/$/,'');
+  const key=document.getElementById('sb-key').value.trim();
+  if(!url||!key){ showToast('URL과 키를 모두 입력해 주세요.','error'); return; }
+  showLoading('연결 테스트 중...');
+  try {
+    const prev_url=SB_URL, prev_key=SB_KEY;
+    SB_URL=url; SB_KEY=key;
+    await sbFetch('violations?limit=1');
+    localStorage.setItem('sb_url',url);
+    localStorage.setItem('sb_key',key);
+    closeSettings();
+    updateConnBadge();
+    await loadData();
+    showToast('✅ Supabase 연결 성공! 이제 모두가 같은 데이터를 공유합니다.','success');
+  } catch(e){
+    SB_URL=''; SB_KEY='';
+    showToast('연결 실패: URL 또는 키를 확인해 주세요.\n'+e.message,'error');
+  }
+  hideLoading();
+}
+function disconnectSupabase(){
+  if(!confirm('연결을 해제하면 로컬 저장 모드로 전환됩니다. 계속하시겠습니까?')) return;
+  SB_URL=''; SB_KEY='';
+  localStorage.removeItem('sb_url'); localStorage.removeItem('sb_key');
+  closeSettings();
+  updateConnBadge();
+  records=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  renderTable(); updateStats();
+  showToast('연결 해제됨. 로컬 저장 모드로 전환됩니다.','info');
+}
+function copySQL(){
+  const sql=`CREATE TABLE violations (
+  id bigint primary key generated always as identity,
+  no integer, date text, plate text not null,
+  name text default '', phone text default '', note text default '',
+  created_at timestamptz default now()
+);
+ALTER TABLE violations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public_all" ON violations FOR ALL TO anon USING (true) WITH CHECK (true);`;
+  navigator.clipboard.writeText(sql).then(()=>showToast('SQL 복사됨!','success'));
 }
 
-// ── ESC 키로 모달 닫기 ────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if(e.key === 'Escape') closeModal();
-});
+// ── 로딩 ──────────────────────────────────────────────────────
+function showLoading(msg='처리 중...'){
+  document.getElementById('loading-msg').textContent=msg;
+  document.getElementById('loading').classList.add('show');
+}
+function hideLoading(){ document.getElementById('loading').classList.remove('show'); }
+
+// ── 토스트 ────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg,type='info'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{ t.className=''; },2800);
+}
+
+// ── 이벤트 ────────────────────────────────────────────────────
+document.getElementById('inp-phone').addEventListener('input',e=>{ e.target.value=fmtPhone(e.target.value); });
+document.getElementById('edit-phone').addEventListener('input',e=>{ e.target.value=fmtPhone(e.target.value); });
+document.getElementById('edit-modal').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeEditModal(); });
+document.getElementById('settings-modal').addEventListener('click',e=>{ if(e.target===e.currentTarget) closeSettings(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeEditModal(); closeSettings(); } });
 
 // ── 초기화 ────────────────────────────────────────────────────
-load();
 document.getElementById('inp-date').value = todayStr();
 document.getElementById('per-page').value = '20';
-updateStats();
-renderTable();
+updateConnBadge();
+loadData();
 </script>
 </body>
 </html>
